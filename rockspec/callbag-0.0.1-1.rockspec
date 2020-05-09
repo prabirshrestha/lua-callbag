@@ -3,7 +3,7 @@ version = "0.0.1-1"
 
 source = {
     url = "git://github.com/prabirshrestha/lua-callbag.git",
-    tag = "0.0.1"
+    tag = "v0.0.1-1"
 }
 
 description = {
