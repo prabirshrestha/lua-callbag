@@ -1,5 +1,5 @@
 package = "callbag"
-version = "v0.0.1-1"
+version = "0.0.1-1"
 
 source = {
     url = "git://github.com/prabirshrestha/lua-callbag.git",
