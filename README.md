@@ -22,7 +22,7 @@ Lightweight observables and iterables for Lua based on [Callbag Spec](https://gi
 | Implemented   | Name                                                   |
 |---------------|--------------------------------------------------------|
 | Yes           | forEach                                                |
-| No            | subscribe                                              |
+| Yes           | subscribe                                              |
 | No            | toList                                                 |
 
 ## Multicasting

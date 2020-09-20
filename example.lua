@@ -32,3 +32,15 @@ C.pipe(
         print(x)
     end)
 )
+
+--------
+print('subscribe example')
+local dispose = C.pipe(
+    C.fromIPairs({ 1, 2, 3, 4, 5 }),
+    C.subscribe({
+        next = function(x) print(x) end,
+        error = function(e) print(e) end,
+        complete = function() print('complete') end
+    })
+)
+dispose()

@@ -38,8 +38,35 @@ local forEach = function (operation)
     end
 end
 
+local subscribe = function (listener)
+    return function (source)
+        if type(listener) == 'function' then listener = { next = listener } end
+
+        local nextcb = listener['next']
+        local errorcb = listener['error']
+        local completecb = listener['complete']
+
+        local talkback
+
+        source(0, function (t, d)
+            if t == 0 then talkback = d end
+            if t == 1 and nextcb then nextcb(d) end
+            if t == 1 or t == 0 then talkback(1) end -- pull
+            if t == 2 and not d and completecb then completecb() end
+            if t == 2 and d and errorcb then errorcb(d) end
+        end)
+
+        local dispose = function ()
+            if talkback then talkback(2) end
+        end
+
+        return dispose
+    end
+end
+
 return {
     pipe = pipe,
     forEach = forEach,
-    fromIPairs = fromIPairs
+    fromIPairs = fromIPairs,
+    subscribe = subscribe
 }
