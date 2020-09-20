@@ -41,7 +41,7 @@ Lightweight observables and iterables for Lua based on [Callbag Spec](https://gi
 | No            | debounceTime                                           |
 | No            | delay                                                  |
 | No            | distinctUntilChanged                                   |
-| No            | filter                                                 |
+| Yes           | filter                                                 |
 | No            | flatten                                                |
 | No            | group                                                  |
 | No            | map                                                    |

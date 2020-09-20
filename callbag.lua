@@ -64,9 +64,33 @@ local subscribe = function (listener)
     end
 end
 
+local filter = function (condition)
+    return function (source)
+        return function (start, sink)
+            if start ~= 0 then return end
+            local talkback
+            source(0, function (t, d)
+                if t == 0 then
+                    talkback = d
+                    sink(t, d)
+                elseif t == 1 then
+                    if condition(d) then
+                        sink(t, d)
+                    else
+                        talkback(1)
+                    end
+                else
+                    sink(t, d)
+                end
+            end)
+        end
+    end
+end
+
 return {
     pipe = pipe,
     forEach = forEach,
     fromIPairs = fromIPairs,
-    subscribe = subscribe
+    subscribe = subscribe,
+    filter = filter
 }

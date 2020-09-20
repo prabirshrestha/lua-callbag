@@ -44,3 +44,11 @@ local dispose = C.pipe(
     })
 )
 dispose()
+
+----
+print('filter example')
+C.pipe(
+    C.fromIPairs({ 1, 2, 3, 4, 5 }),
+    C.filter(function (x) return x % 2 == 0 end),
+    C.forEach(function (x) print(x) end)
+)
