@@ -87,10 +87,26 @@ local filter = function (condition)
     end
 end
 
+local map = function (f)
+    return function (source)
+        return function (start, sink)
+            if start ~= 0 then return end
+            source(0, function (t, d)
+                if t == 1 then
+                    sink(t, f(d))
+                else
+                    sink(t, d)
+                end
+            end)
+        end
+    end
+end
+
 return {
     pipe = pipe,
     forEach = forEach,
     fromIPairs = fromIPairs,
     subscribe = subscribe,
-    filter = filter
+    filter = filter,
+    map = map
 }

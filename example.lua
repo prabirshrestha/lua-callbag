@@ -52,3 +52,11 @@ C.pipe(
     C.filter(function (x) return x % 2 == 0 end),
     C.forEach(function (x) print(x) end)
 )
+
+-----
+print('map example')
+C.pipe(
+    C.fromIPairs({ 1, 2, 3 }),
+    C.map(function (x) return x * 100 end),
+    C.forEach(function (x) print(x) end)
+)
