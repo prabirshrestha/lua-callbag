@@ -102,11 +102,46 @@ local map = function (f)
     end
 end
 
+local distinctUntilChangedDefaultComparator = function (previous, current)
+    return previous == current
+end
+
+local distinctUntilChanged = function (compare)
+    if not compare then compare = distinctUntilChangedDefaultComparator end
+    return function (source)
+        return function (start, sink)
+            if start ~= 0 then return end
+            local inited = false
+            local previous
+            local talkback
+            source(0, function (t, d)
+                if t == 0 then talkback= d end
+                if t~= 1 then
+                    sink(t, d)
+                    return
+                end
+                if inited and compare(previous, d) then
+                    talkback(1)
+                    return
+                end
+
+                inited = 1
+                previous = d
+                sink(1, d)
+            end)
+        end
+    end
+end
+
 return {
     pipe = pipe,
+
     forEach = forEach,
-    fromIPairs = fromIPairs,
     subscribe = subscribe,
+
+    fromIPairs = fromIPairs,
+
+    distinctUntilChanged = distinctUntilChanged,
     filter = filter,
-    map = map
+    map = map,
 }
