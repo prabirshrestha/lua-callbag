@@ -60,3 +60,12 @@ C.pipe(
     C.map(function (x) return x * 100 end),
     C.forEach(function (x) print(x) end)
 )
+
+-----
+print('distinctUntilChanged')
+C.pipe(
+    C.fromIPairs({ 1, 2, 2, 3, 4, 4, 5, 5 }),
+    C.distinctUntilChanged(),
+    C.forEach(function (x) print(x) end)
+)
+
