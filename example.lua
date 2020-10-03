@@ -70,7 +70,7 @@ C.pipe(
 )
 
 ---
-print('fromEvent fro vim')
+print('fromEvent for vim')
 if vim ~= nil then
     C.pipe(
         C.fromEvent('InsertEnter'),
@@ -78,3 +78,12 @@ if vim ~= nil then
     )
 end
 
+---
+print('debounceTime for vim')
+if vim ~= nil then
+    C.pipe(
+        C.fromEvent({ 'TextChangedI', 'TextChangedP' }),
+        C.debounceTime(250),
+        C.forEach(function (x) print('text changed to: ' .. vim.fn.getline('.')) end)
+    )
+end

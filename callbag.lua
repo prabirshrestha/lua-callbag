@@ -226,6 +226,34 @@ local distinctUntilChanged = function (compare)
     end
 end
 
+local debounceTime = function (wait)
+    return function (source)
+        return function (start, sink)
+            if start ~= 0 then return end
+            local timeout
+            source(0, function (t, d)
+                if t == 1 or (t == 2 and d == nil) then
+                    if not timeout and t == 2 then
+                        sink(t, d)
+                        return
+                    end
+
+                    if timeout then
+                        vim.fn.timer_stop(timeout)
+                    end
+
+                    timeout = vim.fn.timer_start(wait, function ()
+                        sink(t, d)
+                        timeout = nil
+                    end)
+                else
+                    sink(t, d)
+                end
+            end)
+        end
+    end
+end
+
 return {
     pipe = pipe,
 
@@ -238,4 +266,6 @@ return {
     distinctUntilChanged = distinctUntilChanged,
     filter = filter,
     map = map,
+
+    debounceTime = debounceTime,
 }
