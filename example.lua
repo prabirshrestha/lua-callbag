@@ -69,3 +69,12 @@ C.pipe(
     C.forEach(function (x) print(x) end)
 )
 
+---
+print('fromEvent fro vim')
+if vim ~= nil then
+    C.pipe(
+        C.fromEvent('InsertEnter'),
+        C.forEach(function (x) print('InsertEnter') end)
+    )
+end
+

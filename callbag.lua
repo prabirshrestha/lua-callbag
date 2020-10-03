@@ -1,3 +1,51 @@
+-- vim sepecific bootstrap
+local callbag_id = 0
+local vimcmd
+local vimeval
+
+local addListener
+local removeListener
+
+local initvim = function ()
+    if vim.api ~= nil then
+        vimcmd = vim.api.nvim_command
+        vimeval = vim.api.nvim_eval
+    else
+        vimcmd = vim.command
+        vimeval = vim.eval
+    end
+
+    callbag_id = vimeval('get(g:, "lua_callbag_id", 0)') + 1
+    vimcmd('let g:lua_callbag_id = ' .. callbag_id)
+
+    local globalAutoCmdHandlerName = 'lua_callbag_autocmd_handler_' .. callbag_id
+    local autoCmdHandlers = {}
+    _G[globalAutoCmdHandlerName] = function (name)
+        autoCmdHandlers[name]()
+    end
+
+    addListener = function (name, events, cb)
+        autoCmdHandlers[name] = cb
+        vimcmd('augroup ' .. name)
+        vimcmd('autocmd!')
+        for _, v in ipairs(events) do
+            local cmd = 'lua ' .. globalAutoCmdHandlerName .. '("' .. name ..'")'
+            vimcmd('au ' .. v .. ' ' .. cmd)
+        end
+        vimcmd('augroup end')
+    end
+
+    removeListener = function (name)
+        vimcmd('augroup ' .. name)
+        vimcmd('autocmd!')
+        vimcmd('augroup end')
+        autoCmdHandlers[name] = nil
+    end
+end
+
+if vim ~= nil then initvim() end
+-- end vim specific bootstrap
+
 local function pipe(...)
     local arg = {...}
     local res = arg[1]
@@ -24,6 +72,51 @@ local fromIPairs = function (values)
         if disposed then return end
 
         sink(2)
+    end
+end
+
+local fromEventId = 0
+local fromEvent = function (events, ...)
+    local arg = {...}
+
+    return function (start, sink)
+        if start ~= 0 then return end
+        local disposed = false
+        local eventName
+        local handler = function ()
+            sink(1, nil)
+        end
+        sink(0, function (t)
+            if t ~= 2 then return end
+            disposed = true
+            if eventName ~= nil then
+                removeListener(eventName)
+            end
+        end)
+
+        if disposed then return end
+
+        if type(events) == type('') then
+            events = { events }
+        end
+
+        local listenerEvents = {}
+        for _, v in ipairs(events) do
+            if type(v) == type('') then
+                table.insert(listenerEvents, v .. ' * ')
+            else
+                table.insert(listenerEvents, table.join(v, ','))
+            end
+        end
+
+        if #arg > 0 then
+            eventName = arg[1]
+        else
+            fromEventId = fromEventId + 1
+            eventName = '__lua_callbag_' .. callbag_id .. '_fromEvent_' .. fromEventId .. '__'
+        end
+
+        addListener(eventName, listenerEvents, handler)
     end
 end
 
@@ -140,6 +233,7 @@ return {
     subscribe = subscribe,
 
     fromIPairs = fromIPairs,
+    fromEvent = fromEvent,
 
     distinctUntilChanged = distinctUntilChanged,
     filter = filter,
