@@ -8,7 +8,7 @@ Lightweight observables and iterables for Lua based on [Callbag Spec](https://gi
 |---------------|--------------------------------------------------------|
 | No            | create                                                 |
 | No            | empty                                                  |
-| No            | fromEvent                                              |
+| Yes           | fromEvent                                              |
 | Yes           | fromIPairs                                             |
 | No            | fromPromise                                            |
 | No            | interval                                               |
