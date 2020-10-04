@@ -12,7 +12,7 @@ Lightweight observables and iterables for Lua based on [Callbag Spec](https://gi
 | Yes           | fromIPairs                                             |
 | No            | fromPromise                                            |
 | No            | interval                                               |
-| No            | lazy                                                   |
+| Yes           | lazy                                                   |
 | Yes           | never                                                  |
 | No            | of                                                     |
 | No            | throwError                                             |

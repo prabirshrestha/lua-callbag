@@ -84,6 +84,19 @@ C.pipe(
     })
 )
 
+---
+
+print('lazy example')
+C.pipe(
+    C.lazy(function () return 1 end),
+    C.subscribe({
+        next = function(x) print(x) end,
+        error = function(e) print(e) end,
+        complete = function() print('complete') end
+    })
+)
+
+
 ----
 print('filter example')
 C.pipe(

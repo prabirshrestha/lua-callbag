@@ -121,6 +121,19 @@ function M.never()
     end
 end
 
+function M.lazy(f)
+    return function (start, sink)
+        if start == 0 then
+            local unsubed = false
+            sink(0, function (t)
+                if t == 2 then unsubed = true end
+            end)
+            sink(1, f())
+            if not unsubed then sink(2) end
+        end
+    end
+end
+
 function M.fromIPairs(values)
     return function (start, sink)
         if start ~= 0 then return end
