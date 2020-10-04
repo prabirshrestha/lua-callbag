@@ -1,5 +1,6 @@
 local t_string = 'string'
 local t_function = 'function'
+local t_table = 'table'
 
 local M = {}
 
@@ -245,6 +246,42 @@ function M.map(f)
                 else
                     sink(t, d)
                 end
+            end)
+        end
+    end
+end
+
+function M.tap(...)
+    local args = {...}
+    local argc = #args
+    local nextcb
+    local errorcb
+    local completecb
+    if argc > 0 and type(args[1]) == t_table then
+        -- args[1] = { next, error, complete }
+        nextcb = args[1]['next']
+        errorcb = args[1]['error']
+        completecb = args[1]['complete']
+    else
+        -- args[1] = next, args[2] = error, args[3] = complete
+        if argc > 0 then nextcb = args[1] end
+        if argc > 1 then errorcb = args[2] end
+        if argc > 2 then completecb = args[3] end
+    end
+    return function (source)
+        return function (start, sink)
+            if start ~= 0 then return end
+            source(0, function (t, d)
+                if t == 1 and d and nextcb then
+                    nextcb(d)
+                elseif t == 2 then
+                    if d then
+                        if errorcb then errorcb(d) end
+                    else
+                        if completecb then completecb() end
+                    end
+                end
+                sink(t, d)
             end)
         end
     end
