@@ -72,6 +72,18 @@ C.pipe(
     })
 )
 
+---
+
+print('never example')
+C.pipe(
+    C.never(),
+    C.subscribe({
+        next = function(x) print(x) end,
+        error = function(e) print(e) end,
+        complete = function() print('complete') end
+    })
+)
+
 ----
 print('filter example')
 C.pipe(

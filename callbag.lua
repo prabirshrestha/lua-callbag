@@ -114,6 +114,13 @@ function M.empty()
     end
 end
 
+function M.never()
+    return function (start, sink)
+        if start ~= 0 then return end
+        sink(0, noop)
+    end
+end
+
 function M.fromIPairs(values)
     return function (start, sink)
         if start ~= 0 then return end
