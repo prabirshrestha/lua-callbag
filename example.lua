@@ -100,3 +100,11 @@ C.pipe(
         complete = function () print('complete') end
     })
 )
+
+-----
+print('tap')
+C.pipe(
+    C.fromIPairs({1,2,3}),
+    C.tap({ next = function(x) print('tap'..x) end }),
+    C.forEach(function (x) print(x) end)
+)

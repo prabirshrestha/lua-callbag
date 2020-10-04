@@ -52,7 +52,7 @@ Lightweight observables and iterables for Lua based on [Callbag Spec](https://gi
 | No            | take                                                   |
 | No            | takeUntil                                              |
 | No            | takeWhile                                              |
-| No            | tap                                                    |
+| Yes           | tap                                                    |
 | No            | dematerialize                                          |
 | No            | concatWith                                             |
 | No            | mergeWith                                              |
