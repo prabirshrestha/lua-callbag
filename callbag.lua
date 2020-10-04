@@ -402,4 +402,47 @@ function M.takeUntil(notifier)
     end
 end
 
+function M.switchMap(makeSource, combineResults)
+    return function (inputSource)
+        return function (start, outputSink)
+            if start ~= 0 then return end
+            if not combineResults then
+                combineResults = function (x, y) return y end
+            end
+            local currSourceTalkback = nil
+            local sourceEnded = false
+
+            inputSource(0, function (t, d)
+                if t == 0 then outputSink(t, d) end
+                if t == 1 then
+                    if currSourceTalkback then
+                        currSourceTalkback(2)
+                        currSourceTalkback = nil
+                    end
+
+                    local currSource = makeSource(d)
+
+                    currSource(0, function (currT, currD)
+                        if currT == 0 then currSourceTalkback = currD end
+                        if currT == 1 then outputSink(t, combineResults(d, currD)) end
+                        if currT == 0 or currT == 1 then
+                            if currSourceTalkback then currSourceTalkback(1) end
+                        end
+                        if currT == 2 then
+                            currSourceTalkback = nil
+                            if sourceEnded then outputSink(currT, currD) end
+                        end
+                    end)
+                end
+                if t == 2 then
+                    sourceEnded = true
+                    if not currSourceTalkback then
+                        outputSink(t, d)
+                    end
+                end
+            end)
+        end
+    end
+end
+
 return M
