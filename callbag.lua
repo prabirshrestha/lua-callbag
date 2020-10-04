@@ -1,6 +1,8 @@
 local t_string = 'string'
 local t_function = 'function'
 
+local M = {}
+
 -- vim sepecific bootstrap
 local callbag_id = 0
 local vimcmd
@@ -49,7 +51,7 @@ end
 if vim ~= nil then initvim() end
 -- end vim specific bootstrap
 
-local function pipe(...)
+function M.pipe(...)
     local arg = {...}
     local res = arg[1]
     for i = 2,#arg do
@@ -79,7 +81,7 @@ local fromIPairs = function (values)
 end
 
 local fromEventId = 0
-local fromEvent = function (events, ...)
+function M.fromEvent(events, ...)
     local arg = {...}
 
     return function (start, sink)
@@ -123,7 +125,7 @@ local fromEvent = function (events, ...)
     end
 end
 
-local forEach = function (operation)
+function M.forEach(operation)
     return function (source)
         local talkback
         source(0, function (t, d)
@@ -134,7 +136,7 @@ local forEach = function (operation)
     end
 end
 
-local subscribe = function (listener)
+function M.subscribe(listener)
     return function (source)
         if type(listener) == t_function then listener = { next = listener } end
 
@@ -160,7 +162,7 @@ local subscribe = function (listener)
     end
 end
 
-local filter = function (condition)
+function M.filter(condition)
     return function (source)
         return function (start, sink)
             if start ~= 0 then return end
@@ -183,7 +185,7 @@ local filter = function (condition)
     end
 end
 
-local map = function (f)
+function M.map(f)
     return function (source)
         return function (start, sink)
             if start ~= 0 then return end
@@ -202,7 +204,7 @@ local distinctUntilChangedDefaultComparator = function (previous, current)
     return previous == current
 end
 
-local distinctUntilChanged = function (compare)
+function M.distinctUntilChanged(compare)
     if not compare then compare = distinctUntilChangedDefaultComparator end
     return function (source)
         return function (start, sink)
@@ -229,7 +231,7 @@ local distinctUntilChanged = function (compare)
     end
 end
 
-local debounceTime = function (wait)
+function M.debounceTime(wait)
     return function (source)
         return function (start, sink)
             if start ~= 0 then return end
@@ -257,18 +259,4 @@ local debounceTime = function (wait)
     end
 end
 
-return {
-    pipe = pipe,
-
-    forEach = forEach,
-    subscribe = subscribe,
-
-    fromIPairs = fromIPairs,
-    fromEvent = fromEvent,
-
-    distinctUntilChanged = distinctUntilChanged,
-    filter = filter,
-    map = map,
-
-    debounceTime = debounceTime,
-}
+return M
