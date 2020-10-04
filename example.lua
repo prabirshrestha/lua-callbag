@@ -61,6 +61,17 @@ C.pipe(
     })
 )
 
+---
+print('empty example')
+C.pipe(
+    C.empty(),
+    C.subscribe({
+        next = function(x) print(x) end,
+        error = function(e) print(e) end,
+        complete = function() print('complete') end
+    })
+)
+
 ----
 print('filter example')
 C.pipe(
