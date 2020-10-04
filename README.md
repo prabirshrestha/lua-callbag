@@ -46,7 +46,7 @@ Lightweight observables and iterables for Lua based on [Callbag Spec](https://gi
 | No            | group                                                  |
 | Yes           | map                                                    |
 | No            | materialize                                            |
-| No            | merge                                                  |
+| Yes           | merge                                                  |
 | No            | scan                                                   |
 | No            | switchMap                                              |
 | No            | take                                                   |

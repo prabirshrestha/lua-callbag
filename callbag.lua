@@ -60,7 +60,7 @@ function M.pipe(...)
     return res
 end
 
-local fromIPairs = function (values)
+function M.fromIPairs(values)
     return function (start, sink)
         if start ~= 0 then return end
         local disposed = false
@@ -159,6 +159,56 @@ function M.subscribe(listener)
         end
 
         return dispose
+    end
+end
+
+function M.merge(...)
+    local sources = {...}
+    return function (start, sink)
+        if start ~= 0 then return end
+        local n = #sources
+        local sourceTalkbacks = {}
+        local startCount = 0
+        local endCount = 0
+        local ended = false
+        local talkback = function (t, d)
+            if t == 2 then ended = true end
+            for i = 1, n do
+                if sourceTalkbacks[i] then
+                    sourceTalkbacks[i](t, d)
+                end
+            end
+        end
+        for i = 1, n do
+            if ended then return end
+            sources[i](0, function (t, d)
+                if t == 0 then
+                    sourceTalkbacks[i] = d
+                    startCount = startCount + 1
+                    if startCount == 1 then
+                        sink(0, talkback)
+                    end
+                elseif t == 2 and d then
+                    ended = true
+                    for j = 1, n do
+                        if j ~= i then
+                            if sourceTalkbacks[j] then
+                                sourceTalkbacks[j](2)
+                            end
+                        end
+                    end
+                    sink(2, d)
+                elseif t == 2 then
+                    sourceTalkbacks[i] = nil
+                    endCount = endCount + 1
+                    if endCount == n then
+                        sink(2)
+                    end
+                else
+                    sink(t, d)
+                end
+            end)
+        end
     end
 end
 
