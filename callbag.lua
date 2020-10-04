@@ -51,7 +51,7 @@ local initvim = function ()
     end
 end
 
-if vim ~= nil then initvim() end
+if vim and vim.fn then initvim() end
 -- end vim specific bootstrap
 
 function M.pipe(...)
