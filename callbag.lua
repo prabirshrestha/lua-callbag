@@ -1,3 +1,8 @@
+local t_string = 'string'
+local t_function = 'function'
+
+local M = {}
+
 -- vim sepecific bootstrap
 local callbag_id = 0
 local vimcmd
@@ -46,7 +51,7 @@ end
 if vim ~= nil then initvim() end
 -- end vim specific bootstrap
 
-local function pipe(...)
+function M.pipe(...)
     local arg = {...}
     local res = arg[1]
     for i = 2,#arg do
@@ -55,7 +60,7 @@ local function pipe(...)
     return res
 end
 
-local fromIPairs = function (values)
+function M.fromIPairs(values)
     return function (start, sink)
         if start ~= 0 then return end
         local disposed = false
@@ -76,7 +81,7 @@ local fromIPairs = function (values)
 end
 
 local fromEventId = 0
-local fromEvent = function (events, ...)
+function M.fromEvent(events, ...)
     local arg = {...}
 
     return function (start, sink)
@@ -96,13 +101,13 @@ local fromEvent = function (events, ...)
 
         if disposed then return end
 
-        if type(events) == type('') then
+        if type(events) == t_string then
             events = { events }
         end
 
         local listenerEvents = {}
         for _, v in ipairs(events) do
-            if type(v) == type('') then
+            if type(v) == t_string then
                 table.insert(listenerEvents, v .. ' * ')
             else
                 table.insert(listenerEvents, table.join(v, ','))
@@ -120,7 +125,7 @@ local fromEvent = function (events, ...)
     end
 end
 
-local forEach = function (operation)
+function M.forEach(operation)
     return function (source)
         local talkback
         source(0, function (t, d)
@@ -131,9 +136,9 @@ local forEach = function (operation)
     end
 end
 
-local subscribe = function (listener)
+function M.subscribe(listener)
     return function (source)
-        if type(listener) == 'function' then listener = { next = listener } end
+        if type(listener) == t_function then listener = { next = listener } end
 
         local nextcb = listener['next']
         local errorcb = listener['error']
@@ -157,7 +162,57 @@ local subscribe = function (listener)
     end
 end
 
-local filter = function (condition)
+function M.merge(...)
+    local sources = {...}
+    return function (start, sink)
+        if start ~= 0 then return end
+        local n = #sources
+        local sourceTalkbacks = {}
+        local startCount = 0
+        local endCount = 0
+        local ended = false
+        local talkback = function (t, d)
+            if t == 2 then ended = true end
+            for i = 1, n do
+                if sourceTalkbacks[i] then
+                    sourceTalkbacks[i](t, d)
+                end
+            end
+        end
+        for i = 1, n do
+            if ended then return end
+            sources[i](0, function (t, d)
+                if t == 0 then
+                    sourceTalkbacks[i] = d
+                    startCount = startCount + 1
+                    if startCount == 1 then
+                        sink(0, talkback)
+                    end
+                elseif t == 2 and d then
+                    ended = true
+                    for j = 1, n do
+                        if j ~= i then
+                            if sourceTalkbacks[j] then
+                                sourceTalkbacks[j](2)
+                            end
+                        end
+                    end
+                    sink(2, d)
+                elseif t == 2 then
+                    sourceTalkbacks[i] = nil
+                    endCount = endCount + 1
+                    if endCount == n then
+                        sink(2)
+                    end
+                else
+                    sink(t, d)
+                end
+            end)
+        end
+    end
+end
+
+function M.filter(condition)
     return function (source)
         return function (start, sink)
             if start ~= 0 then return end
@@ -180,7 +235,7 @@ local filter = function (condition)
     end
 end
 
-local map = function (f)
+function M.map(f)
     return function (source)
         return function (start, sink)
             if start ~= 0 then return end
@@ -199,7 +254,7 @@ local distinctUntilChangedDefaultComparator = function (previous, current)
     return previous == current
 end
 
-local distinctUntilChanged = function (compare)
+function M.distinctUntilChanged(compare)
     if not compare then compare = distinctUntilChangedDefaultComparator end
     return function (source)
         return function (start, sink)
@@ -226,7 +281,7 @@ local distinctUntilChanged = function (compare)
     end
 end
 
-local debounceTime = function (wait)
+function M.debounceTime(wait)
     return function (source)
         return function (start, sink)
             if start ~= 0 then return end
@@ -254,18 +309,4 @@ local debounceTime = function (wait)
     end
 end
 
-return {
-    pipe = pipe,
-
-    forEach = forEach,
-    subscribe = subscribe,
-
-    fromIPairs = fromIPairs,
-    fromEvent = fromEvent,
-
-    distinctUntilChanged = distinctUntilChanged,
-    filter = filter,
-    map = map,
-
-    debounceTime = debounceTime,
-}
+return M

@@ -87,3 +87,16 @@ if vim ~= nil then
         C.forEach(function (x) print('text changed to: ' .. vim.fn.getline('.')) end)
     )
 end
+
+---
+print('merge')
+C.pipe(
+    C.merge(
+        C.fromIPairs({1, 2, 3 }),
+        C.fromIPairs({4, 5, 6})
+    ),
+    C.subscribe({
+        next = function (n) print(n) end,
+        complete = function () print('complete') end
+    })
+)
