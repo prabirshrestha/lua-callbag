@@ -45,6 +45,22 @@ local dispose = C.pipe(
 )
 dispose()
 
+---
+print('create example')
+C.pipe(
+    C.create(function (next, error, complete)
+        next(1)
+        next(2)
+        next(3)
+        complete()
+    end),
+    C.subscribe({
+        next = function(x) print(x) end,
+        error = function(e) print(e) end,
+        complete = function() print('complete') end
+    })
+)
+
 ----
 print('filter example')
 C.pipe(
