@@ -1,3 +1,6 @@
+local t_string = 'string'
+local t_function = 'function'
+
 -- vim sepecific bootstrap
 local callbag_id = 0
 local vimcmd
@@ -96,13 +99,13 @@ local fromEvent = function (events, ...)
 
         if disposed then return end
 
-        if type(events) == type('') then
+        if type(events) == t_string then
             events = { events }
         end
 
         local listenerEvents = {}
         for _, v in ipairs(events) do
-            if type(v) == type('') then
+            if type(v) == t_string then
                 table.insert(listenerEvents, v .. ' * ')
             else
                 table.insert(listenerEvents, table.join(v, ','))
@@ -133,7 +136,7 @@ end
 
 local subscribe = function (listener)
     return function (source)
-        if type(listener) == 'function' then listener = { next = listener } end
+        if type(listener) == t_function then listener = { next = listener } end
 
         local nextcb = listener['next']
         local errorcb = listener['error']
