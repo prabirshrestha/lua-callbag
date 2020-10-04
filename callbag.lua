@@ -346,4 +346,60 @@ function M.debounceTime(wait)
     end
 end
 
+local takeUntilUnique = {}
+function M.takeUntil(notifier)
+    return function (source)
+        return function (start, sink)
+            if start ~= 0 then return end
+            local sourceTalkback
+            local notifierTalkback
+            local inited = false
+            local done = takeUntilUnique
+
+            source(0, function (typ, data)
+                if typ == 0 then
+                    sourceTalkback = data
+
+                    notifier(0, function (t, d)
+                        if t == 0 then
+                            notifierTalkback = d
+                            notifierTalkback(1)
+                            return
+                        end
+                        if t == 1 then
+                            done = nil
+                            notifierTalkback(2)
+                            sourceTalkback(2)
+                            if inited then sink(2) end
+                            return
+                        end
+                        if t == 2 then
+                            notifierTalkback = nil
+                            done = d
+                            if d ~= nil then
+                                sourceTalkback(2)
+                                if inited then sink(t, d) end
+                            end
+                        end
+                    end)
+
+                    inited = true
+
+                    sink(0, function (t, d)
+                        if done ~= takeUntilUnique then return end
+                        if t == 2 and notifierTalkback then notifierTalkback(2) end
+                        sourceTalkback(t, d)
+                    end)
+
+                    if done ~= takeUntilUnique then sink(2, done) end
+                    return
+                end
+
+                if typ == 2 then notifierTalkback(2) end
+                if done == takeUntilUnique then sink(typ, data) end
+            end)
+        end
+    end
+end
+
 return M

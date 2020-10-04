@@ -108,3 +108,14 @@ C.pipe(
     C.tap({ next = function(x) print('tap'..x) end }),
     C.forEach(function (x) print(x) end)
 )
+
+---
+print('takeUntil')
+if vim ~= nil then
+    C.pipe(
+        C.fromEvent({ 'TextChangedI', 'TextChangedP' }),
+        C.takeUntil(C.fromEvent('InsertLeave')),
+        C.debounceTime(250),
+        C.forEach(function (x) print('text changed to: ' .. vim.fn.getline('.')) end)
+    )
+end
