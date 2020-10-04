@@ -2,6 +2,8 @@ local t_string = 'string'
 local t_function = 'function'
 local t_table = 'table'
 
+local noop = function () end
+
 local M = {}
 
 -- vim sepecific bootstrap
@@ -61,6 +63,44 @@ function M.pipe(...)
     return res
 end
 
+function M.create(producer)
+    return function (start, sink)
+        if start ~= 0 then return end
+        if type(producer) ~= t_function then
+            sink(0, noop)
+            sink(2)
+            return
+        end
+        local ended = false
+        local clean
+        sink(0, function (t)
+            if not ended then
+                ended = t == 2
+                if ended and type(clean) == t_function then
+                    clean()
+                end
+            end
+        end)
+        if ended then return end
+        clean = producer(
+            function (v)
+                if not ended then sink(1, v) end
+            end,
+            function (e)
+                if not ended and e ~= nil then
+                    ended = true
+                    sink(2, e)
+                end
+            end,
+            function ()
+                if not ended then
+                    ended = true
+                    sink(2)
+                end
+            end)
+    end
+end
+
 function M.fromIPairs(values)
     return function (start, sink)
         if start ~= 0 then return end
@@ -70,7 +110,7 @@ function M.fromIPairs(values)
             disposed = true
         end)
 
-        for key, value in ipairs(values) do
+        for _, value in ipairs(values) do
             if disposed then return end
             sink(1, value)
         end
