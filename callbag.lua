@@ -101,6 +101,19 @@ function M.create(producer)
     end
 end
 
+function M.empty()
+    return function (start, sink)
+        if start ~= 0 then return end
+        local disposed = false
+        sink(0, function (t)
+            if t ~= 2 then return end
+            disposed = true
+        end)
+        if disposed then return end
+        sink(2)
+    end
+end
+
 function M.fromIPairs(values)
     return function (start, sink)
         if start ~= 0 then return end
