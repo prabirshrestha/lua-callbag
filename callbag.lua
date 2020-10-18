@@ -211,6 +211,7 @@ function M.forEach(operation)
 end
 
 function M.subscribe(listener)
+    if not listener then listener = {} end
     return function (source)
         if type(listener) == t_function then listener = { next = listener } end
 
