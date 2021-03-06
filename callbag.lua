@@ -4,6 +4,27 @@ local t_table = 'table'
 
 local noop = function () end
 
+local clone = function (o)
+    return { table.unpack(o) }
+end
+
+local indexOf = function (t, obj)
+    if type(t) ~= 'table' then error('table expected. got ' .. type(t), 2) end
+    for i, v in ipairs(t) do
+        if obj == v then
+            return i
+        end
+    end
+    return -1
+end
+
+local clear = function (t)
+    for i, v in ipairs(t) do
+        t[i] = nil
+    end
+end
+
+
 local M = {}
 
 -- vim sepecific bootstrap
@@ -151,6 +172,40 @@ function M.fromIPairs(values)
         if disposed then return end
 
         sink(2)
+    end
+end
+
+function M.makeSubject()
+    local sinks = {}
+    local done = false
+    return function (typ, data)
+        if done then return end
+        if typ == 0 then
+            local sink = data
+            table.insert(sinks, data)
+            sink(0, function (t)
+                if t == 2 then
+                    local i = indexOf(sinks, sink)
+                    if i > -1 then
+                        table.remove(sinks, i)
+                    end
+                end
+            end)
+        else
+            local zinkz = clone(sinks)
+
+            for i = 1, #zinkz do
+                local sink = zinkz[i]
+                if indexOf(sinks, sink) > -1 then
+                    sink(typ, data)
+                end
+            end
+
+            if typ == 2 then
+                done = true
+                clear(sinks)
+            end
+        end
     end
 end
 

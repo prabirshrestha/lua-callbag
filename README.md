@@ -29,7 +29,7 @@ Lightweight observables and iterables for Lua based on [Callbag Spec](https://gi
 
 | Implemented   | Name                                                   |
 |---------------|--------------------------------------------------------|
-| No            | makeSubject                                            |
+| Yes           | makeSubject                                            |
 | No            | share                                                  |
 
 ## Operators
