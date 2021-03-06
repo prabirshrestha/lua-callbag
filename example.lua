@@ -171,3 +171,21 @@ if vim ~= nil then
         C.forEach(function (x) print('text changed to: ' .. vim.fn.getline('.')) end)
     )
 end
+
+---
+print('makeSubject')
+local subject = C.makeSubject()
+
+local dispose = C.pipe(
+    subject,
+    C.subscribe({
+        next = function(x) print(x) end,
+        error = function(e) print(e) end,
+        complete = function() print('complete') end
+    })
+)
+
+subject(1, 'hello')
+subject(1, 'world')
+subject(2)
+dispose()
