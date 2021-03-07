@@ -3,6 +3,7 @@ local t_function = 'function'
 local t_table = 'table'
 
 local noop = function () end
+local unpack = table.unpack or unpack
 
 local clone = function (o)
     return { unpack(o) }
@@ -572,6 +573,109 @@ function M.switchMap(makeSource, combineResults)
             end)
         end
     end
+end
+
+function M.spawn(cmd, opt)
+    if not opt then opt = {} end
+	local command = cmd[1]
+	if not (vim.fn.executable(command) == 1) then
+		err('Command ' .. command .. ' not found.')
+		return
+	end
+    return M.create(function (next, err, complete)
+        if vim and vim.api ~= nil then
+            local uv = vim.loop
+            local handle
+            local pid
+            local stdout
+            local stderr
+            local stdin
+
+            local stdio = {}
+            if opt['stdin'] then
+                stdin = uv.new_pipe(false)
+                table.insert(stdio, stdin)
+            end
+            if opt['stdout'] then
+                stdout = uv.new_pipe(false)
+                table.insert(stdio, stdout)
+            end
+            if opt['stderr'] then
+                stderr = uv.new_pipe(false)
+                table.insert(stdio, stderr)
+            end
+
+            local function close_safely(handle)
+                if handle and not handle:is_closing() then
+                    handle:close()
+                end
+            end
+
+            local function on_stdout(err, data)
+                if err then
+                    -- TODO: handle error
+                    return
+                end
+                next({ event = 'stdout', data = data, state = opt['state'] })
+            end
+
+            local function on_stderr(err, data)
+                if err then
+                    -- TODO: handle error
+                    return
+                end
+                next({ event = 'stderr', data = data, state = opt['state'] })
+            end
+
+            local function on_exit(exitcode, signal)
+                if stdout then stdout:read_stop() end
+                if stderr then stderr:read_stop() end
+                close_safely(stdin)
+                close_safely(stdout)
+                close_safely(stderr)
+                close_safely(handle)
+                if opt['exit'] then
+                    next({ event = 'exit', data = { exitcode = exitcode }, state = opt['state'] })
+                end
+				local failOnNonZeroExitCode = opt['failOnNonZeroExitCode']
+				if failOnNonZeroExitCode == nil then failOnNonZeroExitCode = true end
+				if failOnNonZeroExitCode and exitcode ~= 0 then
+					err('Spawn for job failed with exit code ' .. exitcode .. '.')
+				else
+					complete()
+				end
+            end
+
+            handle, pid = uv.spawn(command, {
+                args = {unpack(cmd, 2, #cmd)},
+                stdio = stdio
+            }, on_exit)
+
+            if opt['start'] then
+                next({ event = 'start', data = { state = opt['state'] } })
+            end
+
+            if opt['stdin'] then
+                -- TODO: subscribe to stdin and pipe messages to uv
+            end
+
+            if opt['ready'] then
+                next({ event = 'ready', data = { state = opt['state'], pid = pid } })
+            end
+
+            -- print("process started", handle, pid)
+            if opt['stdout'] then uv.read_start(stdout, on_stdout) end
+            if opt['stderr'] then uv.read_start(stderr, on_stderr) end
+
+            return function ()
+				close_safely(handle)
+            end
+
+            -- uv.write(stdin, "Hello world")
+        else
+            return err('not implemented')
+        end
+    end)
 end
 
 return M
