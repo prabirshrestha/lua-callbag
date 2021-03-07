@@ -579,9 +579,9 @@ function M.spawn(cmd, opt)
     if not opt then opt = {} end
 	local command = cmd[1]
 	if not (vim.fn.executable(command) == 1) then
-		err('Command ' .. command .. ' not found.')
-		return
-	end
+        err('Command ' .. command .. ' not found.')
+        return
+    end
     return M.create(function (next, err, complete)
         if vim and vim.api ~= nil then
             local uv = vim.loop
@@ -637,13 +637,13 @@ function M.spawn(cmd, opt)
                 if opt['exit'] then
                     next({ event = 'exit', data = { exitcode = exitcode }, state = opt['state'] })
                 end
-				local failOnNonZeroExitCode = opt['failOnNonZeroExitCode']
-				if failOnNonZeroExitCode == nil then failOnNonZeroExitCode = true end
-				if failOnNonZeroExitCode and exitcode ~= 0 then
-					err('Spawn for job failed with exit code ' .. exitcode .. '.')
-				else
-					complete()
-				end
+                local failOnNonZeroExitCode = opt['failOnNonZeroExitCode']
+                if failOnNonZeroExitCode == nil then failOnNonZeroExitCode = true end
+                if failOnNonZeroExitCode and exitcode ~= 0 then
+                    err('Spawn for job failed with exit code ' .. exitcode .. '.')
+                else
+                    complete()
+                end
             end
 
             handle, pid = uv.spawn(command, {
@@ -679,3 +679,5 @@ function M.spawn(cmd, opt)
 end
 
 return M
+
+" vim:ts=4:sw=4:ai:foldmethod=marker:foldlevel=0:
