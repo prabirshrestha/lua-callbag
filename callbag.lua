@@ -697,7 +697,7 @@ end
 -- C.pipe(
 --  C.spawn({'bash', '-c', 'read i; echo $i'}, {
 --   stdin = stdin,
---   stdount = 0,
+--   stdout = 0,
 --   stderr = 0,
 --   exit = 0,
 --   start = 0 -- when job starts before subscribing to stdin
