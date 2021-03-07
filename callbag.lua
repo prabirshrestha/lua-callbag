@@ -620,7 +620,7 @@ local function spawn_uv(cmd, opt)
             end
         end
 
-        local function on_exit(exitcode, signal)
+        local function cleanup()
             if disposeStdin then
                 disposeStdin()
                 disposeStdin = nil
@@ -631,6 +631,10 @@ local function spawn_uv(cmd, opt)
             close_safely(stdout)
             close_safely(stderr)
             close_safely(handle)
+        end
+
+        local function on_exit(exitcode, signal)
+            cleanup()
             if opt['exit'] then
                 next({ event = 'exit', data = { exitcode = exitcode }, state = opt['state'] })
             end
@@ -683,11 +687,32 @@ local function spawn_uv(cmd, opt)
         if opt['stderr'] then uv.read_start(stderr, on_stderr) end
 
         return function ()
-            close_safely(handle)
+            cleanup()
         end
     end)
 end
 
+-- spawn {{{
+-- let stdin = C.makeSubject()
+-- C.pipe(
+--  C.spawn({'bash', '-c', 'read i; echo $i'}, {
+--   stdin = stdin,
+--   stdount = 0,
+--   stderr = 0,
+--   exit = 0,
+--   start = 0 -- when job starts before subscribing to stdin
+--   ready = 0 -- when job starts and after subscribing to stdin
+--   pid = 0,
+--   failOnNonZeroExitCode = 1,
+--   failOnStdinError = 1,
+--   env = {}
+--   cwd = ''
+--  ),
+--  C.subscribe({})
+-- )
+-- stdin(1, 'hello')
+-- stdin(1, 'world')
+-- stdin(2) -- required to close stdin
 function M.spawn(cmd, opt)
     if not opt then opt = {} end
 	local command = cmd[1]
