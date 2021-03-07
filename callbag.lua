@@ -2,6 +2,7 @@ local t_string = 'string'
 local t_function = 'function'
 local t_table = 'table'
 
+local uv
 local noop = function () end
 local unpack = table.unpack or unpack
 
@@ -40,6 +41,7 @@ local initvim = function ()
     if vim.api ~= nil then
         vimcmd = vim.api.nvim_command
         vimeval = vim.api.nvim_eval
+        uv = vim.loop
     else
         vimcmd = vim.command
         vimeval = vim.eval
@@ -584,7 +586,6 @@ function M.spawn(cmd, opt)
     end
     return M.create(function (next, err, complete)
         if vim and vim.api ~= nil then
-            local uv = vim.loop
             local spawn_options = {}
             local handle
             local pid
