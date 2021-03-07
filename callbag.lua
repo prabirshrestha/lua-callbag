@@ -585,7 +585,7 @@ function M.spawn(cmd, opt)
     return M.create(function (next, err, complete)
         if vim and vim.api ~= nil then
             local uv = vim.loop
-			local spawn_options = {}
+            local spawn_options = {}
             local handle
             local pid
             local stdin = uv.new_pipe(false)
