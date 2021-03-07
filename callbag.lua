@@ -701,14 +701,14 @@ end
 -- C.pipe(
 --  C.spawn({'bash', '-c', 'read i; echo $i'}, {
 --   stdin = stdin,
---   stdout = 0,
---   stderr = 0,
---   exit = 0,
---   start = 0 -- when job starts before subscribing to stdin
---   ready = 0 -- when job starts and after subscribing to stdin
---   pid = 0,
---   failOnNonZeroExitCode = 1,
---   failOnStdinError = 1,
+--   stdout = false,
+--   stderr = false,
+--   exit = false,
+--   start = false -- when job starts before subscribing to stdin
+--   ready = false -- when job starts and after subscribing to stdin
+--   pid = false,
+--   failOnNonZeroExitCode = true,
+--   failOnStdinError = true,
 --   env = {}
 --   cwd = ''
 --  ),
