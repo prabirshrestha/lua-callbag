@@ -591,6 +591,7 @@ function M.spawn(cmd, opt)
             local stdin = uv.new_pipe(false)
             local stdout = uv.new_pipe(false)
             local stderr = uv.new_pipe(false)
+            local disposeStdin
 
             local function close_safely(handle)
                 if handle and not handle:is_closing() then
@@ -621,6 +622,10 @@ function M.spawn(cmd, opt)
             end
 
             local function on_exit(exitcode, signal)
+                if disposeStdin then
+                    disposeStdin()
+                    disposeStdin = nil
+                end
                 if stdout then stdout:read_stop() end
                 if stderr then stderr:read_stop() end
                 close_safely(stdin)
@@ -649,7 +654,20 @@ function M.spawn(cmd, opt)
             end
 
             if opt['stdin'] then
-                -- TODO: subscribe to stdin and pipe messages to uv
+                disposeStdin = M.pipe(
+                    opt['stdin'],
+                    M.subscribe({
+                        next = function (d)
+                            stdin:write(d)
+                        end,
+                        error = function ()
+                            close_safely(stdin)
+                        end,
+                        complete = function ()
+                            close_safely(stdin)
+                        end
+                    })
+                )
             end
 
             if opt['ready'] then
