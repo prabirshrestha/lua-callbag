@@ -581,6 +581,10 @@ local function spawn_uv(cmd, opt)
     return M.create(function (next, err, complete)
         if not opt then opt = {} end
         local command = cmd[1]
+        if not (vim.fn.executable(command) == 1) then
+            err('Command ' .. command .. ' not found.')
+            return
+        end
         local spawn_options = {}
         local handle
         local pid
@@ -716,10 +720,6 @@ end
 function M.spawn(cmd, opt)
     if not opt then opt = {} end
     local command = cmd[1]
-    if not (vim.fn.executable(command) == 1) then
-        err('Command ' .. command .. ' not found.')
-        return
-    end
     if uv then
         return spawn_uv(cmd, opt)
     else
