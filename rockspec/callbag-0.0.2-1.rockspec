@@ -1,9 +1,9 @@
 package = "callbag"
-version = "0.0.1-1"
+version = "0.0.2-1"
 
 source = {
     url = "git://github.com/prabirshrestha/lua-callbag.git",
-    tag = "v0.0.1-1"
+    tag = "v0.0.2-1"
 }
 
 description = {
