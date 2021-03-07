@@ -588,23 +588,9 @@ function M.spawn(cmd, opt)
 			local spawn_options = {}
             local handle
             local pid
-            local stdout
-            local stderr
-            local stdin
-
-            local stdio = {}
-            if opt['stdin'] then
-                stdin = uv.new_pipe(false)
-                table.insert(stdio, stdin)
-            end
-            if opt['stdout'] then
-                stdout = uv.new_pipe(false)
-                table.insert(stdio, stdout)
-            end
-            if opt['stderr'] then
-                stderr = uv.new_pipe(false)
-                table.insert(stdio, stderr)
-            end
+            local stdin = uv.new_pipe(false)
+            local stdout = uv.new_pipe(false)
+            local stderr = uv.new_pipe(false)
 
             local function close_safely(handle)
                 if handle and not handle:is_closing() then
@@ -617,7 +603,9 @@ function M.spawn(cmd, opt)
                     -- TODO: handle error
                     return
                 end
-                next({ event = 'stdout', data = data, state = opt['state'] })
+                if opt['stdout'] then
+                    next({ event = 'stdout', data = data, state = opt['state'] })
+                end
             end
 
             local function on_stderr(err, data)
@@ -625,7 +613,9 @@ function M.spawn(cmd, opt)
                     -- TODO: handle error
                     return
                 end
-                next({ event = 'stderr', data = data, state = opt['state'] })
+                if opt['stderr'] then
+                    next({ event = 'stderr', data = data, state = opt['state'] })
+                end
             end
 
             local function on_exit(exitcode, signal)
@@ -648,7 +638,7 @@ function M.spawn(cmd, opt)
             end
 
 			spawn_options['args'] = {unpack(cmd, 2, #cmd)}
-			spawn_options['stdio'] =stdio
+			spawn_options['stdio'] = { stdin, stdout, stderr }
 
             handle, pid = uv.spawn(command, spawn_options, on_exit)
 
