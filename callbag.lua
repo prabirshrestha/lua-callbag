@@ -603,7 +603,8 @@ function M.spawn(cmd, opt)
                     -- TODO: handle error
                     return
                 end
-                if opt['stdout'] then
+                -- nil data means end of stdout
+                if opt['stdout'] and data then
                     next({ event = 'stdout', data = data, state = opt['state'] })
                 end
             end
@@ -613,7 +614,8 @@ function M.spawn(cmd, opt)
                     -- TODO: handle error
                     return
                 end
-                if opt['stderr'] then
+                -- nil data means end of stderr
+                if opt['stderr'] and data then
                     next({ event = 'stderr', data = data, state = opt['state'] })
                 end
             end
