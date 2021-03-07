@@ -715,7 +715,7 @@ end
 -- stdin(2) -- required to close stdin
 function M.spawn(cmd, opt)
     if not opt then opt = {} end
-	local command = cmd[1]
+    local command = cmd[1]
     if not (vim.fn.executable(command) == 1) then
         err('Command ' .. command .. ' not found.')
         return
