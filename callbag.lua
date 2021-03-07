@@ -659,7 +659,7 @@ function M.spawn(cmd, opt)
             if opt['stderr'] then uv.read_start(stderr, on_stderr) end
 
             return function ()
-				close_safely(handle)
+                close_safely(handle)
             end
 
             -- uv.write(stdin, "Hello world")
