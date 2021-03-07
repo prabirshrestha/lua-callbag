@@ -5,7 +5,7 @@ local t_table = 'table'
 local noop = function () end
 
 local clone = function (o)
-    return { table.unpack(o) }
+    return { unpack(o) }
 end
 
 local indexOf = function (t, obj)
