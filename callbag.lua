@@ -588,6 +588,11 @@ local function spawn_uv(cmd, opt)
         local stdout = uv.new_pipe(false)
         local stderr = uv.new_pipe(false)
         local disposeStdin
+        local stdinErr
+        local failOnNonZeroExitCode = opt['failOnNonZeroExitCode']
+        if failOnNonZeroExitCode == nil then failOnNonZeroExitCode = true end
+        local failOnStdinError = opt['failOnStdinErr']
+        if failOnStdinError == nil then failOnStdinError = true end
 
         local function close_safely(handle)
             if handle and not handle:is_closing() then
@@ -629,8 +634,10 @@ local function spawn_uv(cmd, opt)
             if opt['exit'] then
                 next({ event = 'exit', data = { exitcode = exitcode }, state = opt['state'] })
             end
-            local failOnNonZeroExitCode = opt['failOnNonZeroExitCode']
-            if failOnNonZeroExitCode == nil then failOnNonZeroExitCode = true end
+            if failOnStdinError and stdinErr then
+                err(stdinErr)
+                return
+            end
             if failOnNonZeroExitCode and exitcode ~= 0 then
                 err('Spawn for job failed with exit code ' .. exitcode .. '.')
             else
@@ -656,8 +663,10 @@ local function spawn_uv(cmd, opt)
                     next = function (d)
                         stdin:write(d)
                     end,
-                    error = function ()
+                    error = function (e)
+                        stdinErr = e
                         close_safely(stdin)
+                        if failOnStdinError then close_safely(handle) end
                     end,
                     complete = function ()
                         close_safely(stdin)
@@ -689,7 +698,7 @@ function M.spawn(cmd, opt)
     if uv then
         return spawn_uv(cmd, opt)
     else
-        return err('not implemented')
+        return err('spawn not implemented')
     end
 end
 
