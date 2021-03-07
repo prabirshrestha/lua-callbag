@@ -62,6 +62,14 @@ Lightweight observables and iterables for Lua based on [Callbag Spec](https://gi
 | No            | throttle                                               |
 | No            | timeout                                                |
 
+## Vim Job and Channels
+
+| Implemented   | Name                                                   |
+|---------------|--------------------------------------------------------|
+| Neovim only   | spawn                                                  |
+
+`spawn` uses `vim.loop` in Neovim.
+
 ## Utils
 
 | Implemented   | Name                                                   |

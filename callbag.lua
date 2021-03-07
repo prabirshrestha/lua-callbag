@@ -2,7 +2,9 @@ local t_string = 'string'
 local t_function = 'function'
 local t_table = 'table'
 
+local uv
 local noop = function () end
+local unpack = table.unpack or unpack
 
 local clone = function (o)
     return { unpack(o) }
@@ -39,6 +41,7 @@ local initvim = function ()
     if vim.api ~= nil then
         vimcmd = vim.api.nvim_command
         vimeval = vim.api.nvim_eval
+        uv = vim.loop
     else
         vimcmd = vim.command
         vimeval = vim.eval
@@ -571,6 +574,156 @@ function M.switchMap(makeSource, combineResults)
                 end
             end)
         end
+    end
+end
+
+local function spawn_uv(cmd, opt)
+    return M.create(function (next, err, complete)
+        if not opt then opt = {} end
+        local command = cmd[1]
+        local spawn_options = {}
+        local handle
+        local pid
+        local stdin = uv.new_pipe(false)
+        local stdout = uv.new_pipe(false)
+        local stderr = uv.new_pipe(false)
+        local disposeStdin
+        local stdinErr
+        local failOnNonZeroExitCode = opt['failOnNonZeroExitCode']
+        if failOnNonZeroExitCode == nil then failOnNonZeroExitCode = true end
+        local failOnStdinError = opt['failOnStdinErr']
+        if failOnStdinError == nil then failOnStdinError = true end
+
+        local function close_safely(handle)
+            if handle and not handle:is_closing() then
+                handle:close()
+            end
+        end
+
+        local function on_stdout(err, data)
+            if err then
+                -- TODO: handle error
+                return
+            end
+            if opt['stdout'] and data then -- nil data means end of stdout
+                next({ event = 'stdout', data = data, state = opt['state'] })
+            end
+        end
+
+        local function on_stderr(err, data)
+            if err then
+                -- TODO: handle error
+                return
+            end
+            if opt['stderr'] and data then -- nil data means end of stderr
+                next({ event = 'stderr', data = data, state = opt['state'] })
+            end
+        end
+
+        local function cleanup()
+            if disposeStdin then
+                disposeStdin()
+                disposeStdin = nil
+            end
+            if stdout then stdout:read_stop() end
+            if stderr then stderr:read_stop() end
+            close_safely(stdin)
+            close_safely(stdout)
+            close_safely(stderr)
+            close_safely(handle)
+        end
+
+        local function on_exit(exitcode, signal)
+            cleanup()
+            if opt['exit'] then
+                next({ event = 'exit', data = { exitcode = exitcode }, state = opt['state'] })
+            end
+            if failOnStdinError and stdinErr then
+                err(stdinErr)
+                return
+            end
+            if failOnNonZeroExitCode and exitcode ~= 0 then
+                err('Spawn for job failed with exit code ' .. exitcode .. '.')
+            else
+                complete()
+            end
+        end
+
+        spawn_options['args'] = {unpack(cmd, 2, #cmd)}
+        spawn_options['stdio'] = { stdin, stdout, stderr }
+        if opt['cwd'] then spawn_options['cwd'] = opt['cwd'] end
+        if opt['env'] then spawn_options['env'] = opt['env'] end
+
+        handle, pid = uv.spawn(command, spawn_options, on_exit)
+
+        if opt['start'] then
+            next({ event = 'start', data = { state = opt['state'] } })
+        end
+
+        if opt['stdin'] then
+            disposeStdin = M.pipe(
+                opt['stdin'],
+                M.subscribe({
+                    next = function (d)
+                        stdin:write(d)
+                    end,
+                    error = function (e)
+                        stdinErr = e
+                        close_safely(stdin)
+                        if failOnStdinError then close_safely(handle) end
+                    end,
+                    complete = function ()
+                        close_safely(stdin)
+                    end
+                })
+            )
+        end
+
+        if opt['ready'] then
+            next({ event = 'ready', data = { state = opt['state'], pid = pid } })
+        end
+
+        if opt['stdout'] then uv.read_start(stdout, on_stdout) end
+        if opt['stderr'] then uv.read_start(stderr, on_stderr) end
+
+        return function ()
+            cleanup()
+        end
+    end)
+end
+
+-- spawn {{{
+-- let stdin = C.makeSubject()
+-- C.pipe(
+--  C.spawn({'bash', '-c', 'read i; echo $i'}, {
+--   stdin = stdin,
+--   stdout = 0,
+--   stderr = 0,
+--   exit = 0,
+--   start = 0 -- when job starts before subscribing to stdin
+--   ready = 0 -- when job starts and after subscribing to stdin
+--   pid = 0,
+--   failOnNonZeroExitCode = 1,
+--   failOnStdinError = 1,
+--   env = {}
+--   cwd = ''
+--  ),
+--  C.subscribe({})
+-- )
+-- stdin(1, 'hello')
+-- stdin(1, 'world')
+-- stdin(2) -- required to close stdin
+function M.spawn(cmd, opt)
+    if not opt then opt = {} end
+    local command = cmd[1]
+    if not (vim.fn.executable(command) == 1) then
+        err('Command ' .. command .. ' not found.')
+        return
+    end
+    if uv then
+        return spawn_uv(cmd, opt)
+    else
+        return err('spawn not implemented')
     end
 end
 
